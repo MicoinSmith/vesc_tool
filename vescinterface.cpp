@@ -23,6 +23,7 @@
 #include <QFileInfo>
 #include <QThread>
 #include <QEventLoop>
+#include <QSettings>
 #include <utility.h>
 
 #ifdef HAS_SERIALPORT
@@ -48,7 +49,8 @@ VescInterface::VescInterface(QObject *parent) : QObject(parent)
     mTimer->setInterval(20);
     mTimer->start();
 
-    mLastConnType = CONN_NONE;
+    mLastConnType = static_cast<conn_t>(QSettings().value("connection_type", CONN_NONE).toInt());
+
     mSendCanBefore = false;
     mCanIdBefore = 0;
     mWasConnected = false;
@@ -70,8 +72,8 @@ VescInterface::VescInterface(QObject *parent) : QObject(parent)
     // TCP
     mTcpSocket = new QTcpSocket(this);
     mTcpConnected = false;
-    mLastTcpServer = "";
-    mLastTcpPort = 0;
+    mLastTcpServer = QSettings().value("tcp_server").toString();
+    mLastTcpPort = QSettings().value("tcp_port").toInt();
 
     connect(mTcpSocket, SIGNAL(readyRead()), this, SLOT(tcpInputDataAvailable()));
     connect(mTcpSocket, SIGNAL(connected()), this, SLOT(tcpInputConnected()));
@@ -379,7 +381,7 @@ bool VescInterface::connectSerial(QString port, int baudrate)
 #ifdef HAS_SERIALPORT
     mLastSerialPort = port;
     mLastSerialBaud = baudrate;
-    mLastConnType = CONN_SERIAL;
+    setLastConnectionType(CONN_SERIAL);
 
     bool found = false;
     for (VSerialInfo_t ser: listSerialPorts()) {
@@ -474,7 +476,7 @@ void VescInterface::connectTcp(QString server, int port)
 {
     mLastTcpServer = server;
     mLastTcpPort = port;
-    mLastConnType = CONN_TCP;
+    setLastConnectionType(CONN_TCP);
 
     QHostAddress host;
     host.setAddress(server);
@@ -594,20 +596,20 @@ void VescInterface::timerSlot()
         mFwPollCnt++;
         if (mFwPollCnt >= 4) {
             mFwPollCnt = 0;
-            if (!mFwVersionReceived) {
-                mCommands->getFwVersion();
-                mFwRetries++;
+        if (!mFwVersionReceived) {
+            mCommands->getFwVersion();
+            mFwRetries++;
 
-                // Timeout if the firmware cannot be read
+            // Timeout if the firmware cannot be read
                 if (mFwRetries >= 25) {
-                    emit statusMessage(tr("No firmware read response"), false);
-                    emit messageDialog(tr("Read Firmware Version"),
-                                       tr("Could not read firmware version. Make sure "
-                                          "that selected port really belongs to the VESC. "),
+                emit statusMessage(tr("No firmware read response"), false);
+                emit messageDialog(tr("Read Firmware Version"),
+                                   tr("Could not read firmware version. Make sure "
+                                      "that selected port really belongs to the VESC. "),
                                        false, false);
-                    disconnectPort();
-                }
+                disconnectPort();
             }
+        }
         }
     } else {
         updateFwRx(false);
@@ -787,4 +789,10 @@ void VescInterface::updateFwRx(bool fwRx)
     if (change) {
         emit fwRxChanged(mFwVersionReceived, mCommands->isLimitedMode());
     }
+}
+
+void VescInterface::setLastConnectionType(conn_t type)
+{
+    mLastConnType = type;
+    QSettings().setValue("connection_type", type);
 }
