@@ -25,7 +25,9 @@
 #include <QDesktopWidget>
 #include <QFontDatabase>
 
+#ifdef USE_MOBILE
 #include "mobile/qmlui.h"
+#endif
 
 int main(int argc, char *argv[])
 {

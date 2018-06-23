@@ -32,8 +32,6 @@ QT       += widgets
 QT       += printsupport
 QT       += network
 QT       += bluetooth
-QT       += quick
-QT       += quickcontrols2
 
 contains(DEFINES, HAS_SERIALPORT) {
     QT       += serialport
@@ -75,6 +73,7 @@ release_android {
 
 build_mobile {
     DEFINES += USE_MOBILE
+    include(mobile/mobile.pri)
 }
 
 SOURCES += main.cpp\
@@ -114,7 +113,6 @@ FORMS    += mainwindow.ui \
 
 include(pages/pages.pri)
 include(widgets/widgets.pri)
-include(mobile/mobile.pri)
 
 RESOURCES += res.qrc
 

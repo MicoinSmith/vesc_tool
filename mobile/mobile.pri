@@ -1,3 +1,6 @@
+QT       += quick
+QT       += quickcontrols2
+
 HEADERS += \
     $$PWD/qmlui.h \
     $$PWD/fwhelper.h
