@@ -84,6 +84,7 @@ VescInterface::VescInterface(QObject *parent) : QObject(parent)
 
     // BLE
     mBleUart = new BleUart(this);
+    mLastBleAddr = QSettings().value("ble_addr").toString();
 
     int size = mSettings.beginReadArray("bleNames");
     for (int i = 0; i < size; ++i) {
@@ -499,6 +500,7 @@ void VescInterface::connectBle(QString address)
     mBleUart->startConnect(address);
     mLastConnType = CONN_BLE;
     mLastBleAddr = address;
+    setLastConnectionType(CONN_BLE);
 }
 
 bool VescInterface::isAutoconnectOngoing() const

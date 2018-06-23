@@ -65,6 +65,22 @@ void PageConnection::setVesc(VescInterface *vesc)
     connect(mVesc->bleDevice(), SIGNAL(scanDone(QVariantMap,bool)),
             this, SLOT(bleScanDone(QVariantMap,bool)));
 
+    QString lastBleAddr = QSettings().value("ble_addr").toString();
+    if (lastBleAddr != "") {
+        QString setName = mVesc->getBleName(lastBleAddr);
+
+        QString name;
+        if (!setName.isEmpty()) {
+            name += setName;
+            name += " [";
+            name += lastBleAddr;
+            name += "]";
+        } else {
+            name = lastBleAddr;
+        }
+        ui->bleDevBox->insertItem(0, name, lastBleAddr);
+    }
+
     on_serialRefreshButton_clicked();
 }
 
@@ -215,7 +231,9 @@ void PageConnection::on_bleConnectButton_clicked()
 {
     if (mVesc) {
         if (ui->bleDevBox->count() > 0) {
-            mVesc->connectBle(ui->bleDevBox->currentData().toString());
+            QString bleAddr = ui->bleDevBox->currentData().toString();
+            mVesc->connectBle(bleAddr);
+            QSettings().setValue("ble_addr", bleAddr);
         }
     }
 }
